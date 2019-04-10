@@ -121,15 +121,15 @@ class Main:
             # the leftmost, the topmost, the rightmost and the lowermost coordinate
             cc_bounding_box = [x_min, y_min, x_max, y_max]
 
-            cc_area = (self.image_threshold[y_min:y_max, x_min:x_max] == 0).sum()
-
+            cc_area = (self.image_threshold[y_min:y_max, x_min:x_max] == 255).sum()
+            # print(cc_area)
             b_size = stats[i, 2] * stats[i, 3]
 
             cc_dens = cc_area / b_size
 
             cc_ratio = min(stats[i, 2], stats[i, 3]) / max(stats[i, 2], stats[i, 3])
 
-            cv2.rectangle(self.image, (x_min, y_min), (x_max, y_max), (0, 255, 0), 3)
+            # cv2.rectangle(self.image, (x_min, y_min), (x_max, y_max), (0, 255, 0), 3)
 
             # cc_same_column = []
             cc_same_row = []
@@ -205,6 +205,7 @@ class Main:
             # cc_features.append(cc_left_nearest_neighbor)
             # xx.append(cc_features)
             if is_text(cc_area, cc_dens, cc_ratio, cc_inside):
+
                 text_cc_features.append(
                     [cc_bounding_box, cc_area, b_size, cc_dens, cc_ratio, cc_same_row, cc_inside,  # cc_same_column
                      cc_right_neighbors, cc_left_neighbors, cc_right_nearest_neighbor, cc_left_nearest_neighbor])
@@ -215,7 +216,7 @@ class Main:
                      cc_right_neighbors, cc_left_neighbors, cc_right_nearest_neighbor, cc_left_nearest_neighbor])
 
         cv2.imwrite("binary_document.jpg", self.binary_document)
-        print(xx)
+
         return text_cc_features, non_text_cc_features
         # img2 = np.ones(output.shape) * 255
         # # img2[output == i] = 0
@@ -485,13 +486,13 @@ class Main:
                         new_region2 = region[count: count + max_Line, :]
                         new_region3 = region[count + max_Line:, :]
                         if cv2.connectedComponentsWithStats(new_region1, connectivity=8)[0] > 2:
-                            print(cv2.connectedComponentsWithStats(new_region1, connectivity=8)[0])
+                            # print(cv2.connectedComponentsWithStats(new_region1, connectivity=8)[0])
                             open_list.append(new_region1)
                         if cv2.connectedComponentsWithStats(new_region2, connectivity=8)[0] > 2:
-                            print(cv2.connectedComponentsWithStats(new_region2, connectivity=8)[0])
+                            # print(cv2.connectedComponentsWithStats(new_region2, connectivity=8)[0])
                             open_list.append(new_region2)
                         if cv2.connectedComponentsWithStats(new_region3, connectivity=8)[0] > 2:
-                            print(cv2.connectedComponentsWithStats(new_region3, connectivity=8)[0])
+                            # print(cv2.connectedComponentsWithStats(new_region3, connectivity=8)[0])
                             open_list.append(new_region3)
                     else:
                         # step 1
@@ -514,10 +515,10 @@ class Main:
                         new_region1 = region[:count, :]
                         new_region2 = region[count + max_Line:, :]
                         if cv2.connectedComponentsWithStats(new_region1, connectivity=8)[0] > 2:
-                            print(cv2.connectedComponentsWithStats(new_region1, connectivity=8)[0])
+                            # print(cv2.connectedComponentsWithStats(new_region1, connectivity=8)[0])
                             open_list.append(new_region1)
                         if cv2.connectedComponentsWithStats(new_region2, connectivity=8)[0] > 2:
-                            print(cv2.connectedComponentsWithStats(new_region2, connectivity=8)[0])
+                            # print(cv2.connectedComponentsWithStats(new_region2, connectivity=8)[0])
                             open_list.append(new_region2)
 
                     else:
@@ -561,13 +562,13 @@ class Main:
                         new_region3 = region[:, count + max_Line:]
 
                         if cv2.connectedComponentsWithStats(new_region1, connectivity=8)[0] > 2:
-                            print(cv2.connectedComponentsWithStats(new_region1, connectivity=8)[0])
+                            # print(cv2.connectedComponentsWithStats(new_region1, connectivity=8)[0])
                             vertical_homogeonus_.append(new_region1)
                         if cv2.connectedComponentsWithStats(new_region2, connectivity=8)[0] > 2:
-                            print(cv2.connectedComponentsWithStats(new_region2, connectivity=8)[0])
+                            # print(cv2.connectedComponentsWithStats(new_region2, connectivity=8)[0])
                             vertical_homogeonus_.append(new_region2)
                         if cv2.connectedComponentsWithStats(new_region3, connectivity=8)[0] > 2:
-                            print(cv2.connectedComponentsWithStats(new_region3, connectivity=8)[0])
+                            # print(cv2.connectedComponentsWithStats(new_region3, connectivity=8)[0])
                             vertical_homogeonus_.append(new_region3)
                     else:
                         # step 1
@@ -590,10 +591,10 @@ class Main:
                         new_region1 = region[:, :count]
                         new_region2 = region[:, count + max_Line:]
                         if cv2.connectedComponentsWithStats(new_region1, connectivity=8)[0] > 2:
-                            print(cv2.connectedComponentsWithStats(new_region1, connectivity=8)[0])
+                            # print(cv2.connectedComponentsWithStats(new_region1, connectivity=8)[0])
                             vertical_homogeonus_.append(new_region1)
                         if cv2.connectedComponentsWithStats(new_region2, connectivity=8)[0] > 2:
-                            print(cv2.connectedComponentsWithStats(new_region2, connectivity=8)[0])
+                            # print(cv2.connectedComponentsWithStats(new_region2, connectivity=8)[0])
                             vertical_homogeonus_.append(new_region2)
 
                     else:
@@ -729,10 +730,10 @@ class Main:
 
     def print_component(self, text, non_text):
         img2 = np.ones(self.image.shape) * 255
-        # for c in text:
-        #     cv2.rectangle(self.image, (c[0][0], c[0][1]), (c[0][2], c[0][3]), (0, 0, 255), 3)
-        # for c in non_text:
-        #     cv2.rectangle(self.image, (c[0][0], c[0][1]), (c[0][2], c[0][3]), (255, 0, 0), 3)
+        for c in text:
+            cv2.rectangle(self.image, (c[0][0], c[0][1]), (c[0][2], c[0][3]), (0, 0, 255), 3)
+        for c in non_text:
+            cv2.rectangle(self.image, (c[0][0], c[0][1]), (c[0][2], c[0][3]), (255, 0, 0), 3)
 
         cv2.imwrite("component.jpg", self.image)
 
@@ -743,15 +744,15 @@ class Main:
 
     def run(self):
         self.sauvola_threshold()
-        self.connected_component(None, None)
-        self.print_component(None, None)
-        # homogeneous_list = self.algo()
-        # self.print_homogeneous(homogeneous_list)
+        text_cc_features, non_text_cc_features = self.connected_component(None, None)
+        self.print_component(text_cc_features, non_text_cc_features)
+        homogeneous_list = self.algo()
+        self.print_homogeneous(homogeneous_list)
         # self.recursive_filter(homogeneous_list)
 
 
 if __name__ == '__main__':
-    IMAGE_PATH = './images/11.jpg'
+    IMAGE_PATH = './images/12.jpg'
     main = Main(IMAGE_PATH)
 
     start = time.time()
