@@ -46,73 +46,56 @@ class Main:
 
     def otsu_threshold(self):
         self.image_threshold = cv2.threshold(self.image_gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
-        self.image_threshold = cv2.bitwise_not(self.image_threshold)
+        # self.image_threshold = cv2.bitwise_not(self.image_threshold)
 
         self.binary_document = self.image_threshold.copy()
 
         # cv2.imwrite("binary_document.jpg", self.binary_document)
         cv2.imwrite('image_otsu.jpg', self.image_threshold)
 
-    def connected_component(self, nb_components, stats):
-        def imshow_components(labels):
-            # Map component labels to hue val
-            label_hue = np.uint8(179 * labels / np.max(labels))
-            blank_ch = 255 * np.ones_like(label_hue)
-            labeled_img = cv2.merge([label_hue, blank_ch, blank_ch])
-
-            # cvt to BGR for display
-            labeled_img = cv2.cvtColor(labeled_img, cv2.COLOR_HSV2BGR)
-
-            # set bg label to black
-            labeled_img[label_hue == 0] = 0
-
-            cv2.imwrite('labeled.png', labeled_img)
-
+    def connected_component(self, region):
+        # def imshow_components(labels):
+        #     # Map component labels to hue val
+        #     label_hue = np.uint8(179 * labels / np.max(labels))
+        #     blank_ch = 255 * np.ones_like(label_hue)
+        #     labeled_img = cv2.merge([label_hue, blank_ch, blank_ch])
+        #
+        #     # cvt to BGR for display
+        #     labeled_img = cv2.cvtColor(labeled_img, cv2.COLOR_HSV2BGR)
+        #
+        #     # set bg label to black
+        #     labeled_img[label_hue == 0] = 0
+        #
+        #     cv2.imwrite('labeled.png', labeled_img)
+        #
         # ret, labels = cv2.connectedComponents(self.image_threshold)
-
+        #
         # imshow_components(labels)
 
-        # img = cv2.bitwise_not(self.image_threshold)
-        nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(self.image_threshold, connectivity=8)
-
-        sorted(stats, key=lambda x: x[1])
-        new_stats = [item[1] for item in stats]
-        print(nb_components)
-
-        # sizes = stats[:, -1]
-        #
-        # print(output)
-        # max_label = 2
-        # max_size = sizes[2]
-        # for i in range(3, nb_components):
-        #     if sizes[i] > max_size:
-        #         max_label = i
-        #         max_size = sizes[i]
-        #
-        # print(max_label)
-        # img2 = np.zeros(output.shape)
-        # img2[output == max_label] = 255
-        # cv2.imwrite("Biggest component.jpg", img2)
-
         def is_text(area, dense, ration, inside):
-            if area < 5:
+            if area < 6:
                 return False
             if dense < 0.05:
                 return False
-            # if ration < 0.06:
-            #     return False
+            if ration < 0.06:
+                return False
             if len(inside) > 3:
                 return False
 
             return True
 
+        # region = cv2.bitwise_not(region)
+        nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(region, connectivity=8)
+
+        sorted(stats, key=lambda x: x[1])
+        y_min_from_stats = [item[1] for item in stats]
+        print(nb_components)
+
         text_cc_features = []
         non_text_cc_features = []
 
-        xx = []
         for i in range(2, nb_components):
 
-            cc_features = []
             x_min = stats[i, 0]
             y_min = stats[i, 1]
             x_max = stats[i, 0] + stats[i, 2]
@@ -137,7 +120,7 @@ class Main:
             cc_right_neighbors = []
             cc_left_neighbors = []
 
-            j = new_stats[2:].index(y_min)+2
+            j = y_min_from_stats[2:].index(y_min) + 2
 
             while j < nb_components and cc_bounding_box[3] > stats[j][1]:
                 if i != j:
@@ -175,35 +158,20 @@ class Main:
                             and cc_bounding_box[2] > x_max and cc_bounding_box[3] > y_max:
                         cc_inside.append(j)
                 j += 1
+
+            # Get Nearest neighbor
             if len(cc_right_neighbors) != 0:
                 cc_right_nearest_neighbor = stats[cc_right_neighbors[0], 0]
-                # min_x_min = self.image.shape[1]
-                # for component in cc_right_neighbors:
-                #     if stats[component, 0] < min_x_min:
-                #         min_x_min = stats[component, 0]
-                # cc_right_nearest_neighbor = min_x_min
             else:
                 cc_right_nearest_neighbor = -1
 
             if len(cc_left_neighbors) != 0:
                 cc_left_nearest_neighbor = stats[cc_left_neighbors[0], 0] + stats[
                     cc_left_neighbors[0], 2]
-                # max_x_max = 0
-                # for component in cc_right_neighbors:
-                #     if stats[component, 0] + stats[component, 2] > max_x_max:
-                #         max_x_max = stats[component, 0] + stats[component, 2]
-                # cc_left_nearest_neighbor = max_x_max
             else:
                 cc_left_nearest_neighbor = -1
 
-            # cc_features.append(cc_same_column)
-            # cc_features.append(cc_same_row)
-            # cc_features.append(cc_inside)
-            # cc_features.append(len(cc_right_neighbors))
-            # cc_features.append(len(cc_left_neighbors))
-            # cc_features.append(cc_right_nearest_neighbor)
-            # cc_features.append(cc_left_nearest_neighbor)
-            # xx.append(cc_features)
+            # Test Text
             if is_text(cc_area, cc_dens, cc_ratio, cc_inside):
 
                 text_cc_features.append(
@@ -218,11 +186,6 @@ class Main:
         cv2.imwrite("binary_document.jpg", self.binary_document)
 
         return text_cc_features, non_text_cc_features
-        # img2 = np.ones(output.shape) * 255
-        # # img2[output == i] = 0
-        # cv2.rectangle(img2, (cc_bounding_box[0], cc_bounding_box[1]), (cc_bounding_box[2], cc_bounding_box[3]),
-        # (0, 255, 0), 3)
-        # cv2.imwrite("Biggest component_" + str(i) + ".jpg", img2)
 
     # def connected_component2(self, nb_components, stats):
     #
@@ -348,7 +311,8 @@ class Main:
     #     # (0, 255, 0), 3)
     #     # cv2.imwrite("Biggest component_" + str(i) + ".jpg", img2)
 
-    def recursive_segmentation(self, region):
+    def homogeneous_regions_extraction(self, region):
+
         def rle(histogram):
             rle_list = []
             length_zero = 0
@@ -701,6 +665,12 @@ class Main:
 
         return cc_features, features
 
+    def recursive_filter(self):
+        # homogeneous regions extraction
+
+        # white space analysis
+        pass
+
     def recursive_filter(self, homogeneous_region):
 
         def max_median_filter(omega_area, omega_h, omega_w, area, h, w):
@@ -743,12 +713,13 @@ class Main:
             cv2.imwrite('homogeneous_' + str(i) + ".jpg", homogeneous)
 
     def run(self):
+        # self.otsu_threshold()
         self.sauvola_threshold()
-        text_cc_features, non_text_cc_features = self.connected_component(None, None)
+        text_cc_features, non_text_cc_features = self.connected_component(self.image_threshold)
         self.print_component(text_cc_features, non_text_cc_features)
-        homogeneous_list = self.algo()
-        self.print_homogeneous(homogeneous_list)
-        # self.recursive_filter(homogeneous_list)
+        # homogeneous_list = self.algo()
+        # self.print_homogeneous(homogeneous_list)
+        # # self.recursive_filter(homogeneous_list)
 
 
 if __name__ == '__main__':
